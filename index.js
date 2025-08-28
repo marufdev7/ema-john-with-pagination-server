@@ -3,7 +3,7 @@ const cors = require('cors');
 require('dotenv').config()
 const app = express();
 const port = process.env.PORT || 5000;
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 // middleware
 app.use(cors());
@@ -32,13 +32,26 @@ async function run() {
         app.get('/products', async (req, res) => {
             const page = parseInt(req.query.page);
             const limit = parseInt(req.query.limit);
-            console.log('pagination query', page, limit);
+            // console.log('pagination query', page, limit);
             const result = await productCollection.find()
                 .skip(page * limit)
                 .limit(limit)
                 .toArray();
             res.send(result);
         });
+
+        app.post('/productByIds', async (req, res) => {
+            const ids = req.body;
+            const objectIds = ids.map(id => new ObjectId(id));
+            // console.log(objectIds);
+            const query = {
+                _id: {
+                    $in: objectIds
+                }
+            }
+            const result = await productCollection.find(query).toArray();
+            res.send(result);
+        })
 
         app.get('/products-count', async (req, res) => {
             const count = await productCollection.estimatedDocumentCount();
